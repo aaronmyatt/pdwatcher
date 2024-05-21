@@ -46,20 +46,31 @@ input.kvOpened.forEach(async (db, index) => {
 
 ## watchEachKv
 ```ts
-import {equals as keysAreEqual} from "@kitsonk/kv-toolbox/keys";
+import {equals as keysAreEqual} from "jsr:@kitsonk/kv-toolbox/keys";
+
 const latest = []
-console.log('notinterval')
+
 while(1){
-    const lastTen = await Promise.all(input.kvOpened.map(async (kv) => { return await Array.fromAsync(kv.list({prefix: ['pd']}, { limit: 10 })) }))
-    lastTen.forEach(last => {
+    const lastTenInputs = await Promise.all(input.kvOpened.map(async (kv) => { return await Array.fromAsync(kv.list({prefix: ['pd','input']}, { limit: 10 })) }))
+    lastTenInputs.forEach(last => {
         last.forEach(entry => {
             if(latest.find(seen => keysAreEqual(seen.key, entry.key) && seen.versionstamp === entry.versionstamp)) return;
             latest.push(entry);
             console.log(entry);
         })
     })
+
+    const lastTenOutputs = await Promise.all(input.kvOpened.map(async (kv) => await Array.fromAsync(kv.list({prefix: ['pd','output']}, { limit: 10 }))))
+    lastTenOutputs.forEach(last => {
+        last.forEach(entry => {
+            if(latest.find(seen => keysAreEqual(seen.key, entry.key) && seen.versionstamp === entry.versionstamp)) return;
+            latest.push(entry);
+            console.log(entry);
+        })
+    })
+
     await (new Promise((resolve) => {
-        setTimeout(() => { resolve() }, 500)
+        setTimeout(() => { resolve() }, 1000)
     }))
 }
 ```
