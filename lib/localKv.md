@@ -43,6 +43,7 @@ they get totally unapproached names like: `6916b74b438cd5f9a4c303a17443473fa2cb3
 I may ask a question in the Deno repo as things progress here. If I can figure how they generate these seemingly random ids I might be able to decyrpt them to find they match something human readable.
 
 Meanwhile, as a first effort, we will query each kv instance and check if they have at least one row.
+- not: /localKvs
 ```ts
 const kvPromises = input.localKvs.map(async (localKv) => {
     const records = await localKv.kv.list({prefix: []}, {limit:10})
@@ -54,6 +55,7 @@ input.localKvs = await Promise.all(kvPromises)
 ```
 
 ## checkForMeta
+- check: /localKvs
 ```ts
 const kvPromises = input.localKvs.map(async (localKv) => {
     const [name] = await localKv.kv.getMany([
