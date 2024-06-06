@@ -32,19 +32,19 @@ The call to the `localKv` pipe will have the latest outputs fetched
 import { colors } from "https://deno.land/x/cliffy@v1.0.0-rc.4/ansi/colors.ts";
 
 const formatRecord = (name, record) => {
-    const logBase = `${name || 'NoName'} ${record.key.at(-2)} ${colors.bold.green(record.key.at(-1))}`;
+    const logBase = `${name || 'NoName'} ${record.key.at(-2)} ${colors.bold.green(record.key.at(-1) || '')}`;
     try {
         let value = record.value;
         typeof value === 'string' && (value = JSON.parse(value));
         const keys = Object.keys(value).map(k => {
-            if(k === 'error') return colors.red(k);
-            if(k === 'errors') return colors.red(k);
+            if(k === 'error') return colors.red(k || '');
+            if(k === 'errors') return colors.red(k || '');
             return k;
         })
         return `${logBase} ${keys}`;
     } catch(e) {
         input.debug && console.error(e.message);
-        return `${logBase} ${colors.yellow(record.value)}`;
+        return `${logBase} ${colors.yellow(record.value || '')}`;
     }
 }
 
@@ -59,10 +59,4 @@ for(const kvInfo of input.localKvs){
         console.log(formatRecord(kvInfo.name, record));
     }
 }
-```
-
-## waitBetweenQuerySweeps
-We will wait a few seconds between each sweep of the kv stores.
-```ts
-await new Promise(resolve => setTimeout(resolve, 1000));
 ```
