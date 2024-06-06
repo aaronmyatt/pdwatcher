@@ -26,12 +26,8 @@ else {
 }
 ```
 
-## getLatestOutputs
-The call to the `localKv` pipe will have the latest outputs fetched
 ```ts
-import { colors } from "https://deno.land/x/cliffy@v1.0.0-rc.4/ansi/colors.ts";
-
-const formatRecord = (name, record) => {
+input.formatRecord = (name, record) => {
     const logBase = `${name || 'NoName'} ${record.key.at(-2)} ${colors.bold.green(record.key.at(-1) || '')}`;
     try {
         let value = record.value;
@@ -47,6 +43,22 @@ const formatRecord = (name, record) => {
         return `${logBase} ${colors.yellow(record.value || '')}`;
     }
 }
+```
+
+## printHistory
+- check: /showHistory
+    ```ts
+    for(const kvInfo of input.localKvs){
+        for(const record of input.history[kvInfo.id]){
+            console.log(input.formatRecord(kvInfo.name, record));
+        }
+    }
+    ```
+
+## getLatestOutputs
+The call to the `localKv` pipe will have the latest outputs fetched
+```ts
+import { colors } from "https://deno.land/x/cliffy@v1.0.0-rc.4/ansi/colors.ts";
 
 for(const kvInfo of input.localKvs){
     for(const record of kvInfo.records){
@@ -56,7 +68,7 @@ for(const kvInfo of input.localKvs){
 
         if(seen) continue;
         $p.set(input, `/history/${kvInfo.id}/-`, record);
-        console.log(formatRecord(kvInfo.name, record));
+        console.log(input.formatRecord(kvInfo.name, record));
     }
 }
 ```
