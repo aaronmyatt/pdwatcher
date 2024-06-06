@@ -7,34 +7,36 @@ Output: `[{path: '', id: '', records:[]}]` first 10 records
 
 ## localDenoLocationDataPath
 Extract the path from `deno info`
-```ts
-import {$} from "jsr:@david/dax";
-import { assert } from "jsr:@std/assert/assert";
-import { exists, walk } from "jsr:@std/fs";
+- not: /localKvs
+    ```ts
+    import {$} from "jsr:@david/dax";
+    import { assert } from "jsr:@std/assert/assert";
+    import { exists, walk } from "jsr:@std/fs";
 
-const result = await $`deno info`.lines()
-input.locationPath = '/'+result
-    .find(line => line.includes('location_data'))
-    .split(' /')
-    .at(1)
+    const result = await $`deno info`.lines()
+    input.locationPath = '/'+result
+        .find(line => line.includes('location_data'))
+        .split(' /')
+        .at(1)
 
-assert(await exists(input.locationPath))
-```
+    assert(await exists(input.locationPath))
+    ```
 
 ## getPathAndId
 Setup an object with Deno KV information.
-```ts
-import { basename, dirname } from "jsr:@std/path";
+- not: /localKvs
+    ```ts
+    import { basename, dirname } from "jsr:@std/path";
 
-input.localKvs = []
-for await (const entry of walk(input.locationPath)){
-    const id = basename(dirname(entry.path))
-    if(entry.name === 'kv.sqlite3'){
-        const kv = await Deno.openKv(entry.path)
-        $p.set(input, '/localKvs/-', {id, path: entry.path, kv})
+    input.localKvs = []
+    for await (const entry of walk(input.locationPath)){
+        const id = basename(dirname(entry.path))
+        if(entry.name === 'kv.sqlite3'){
+            const kv = await Deno.openKv(entry.path)
+            $p.set(input, '/localKvs/-', {id, path: entry.path, kv})
+        }
     }
-}
-```
+    ```
 
 ## checkForData
 A draw back of working with Deno KV locally is that 
@@ -43,10 +45,9 @@ they get totally unapproached names like: `6916b74b438cd5f9a4c303a17443473fa2cb3
 I may ask a question in the Deno repo as things progress here. If I can figure how they generate these seemingly random ids I might be able to decyrpt them to find they match something human readable.
 
 Meanwhile, as a first effort, we will query each kv instance and check if they have at least one row.
-- not: /localKvs
 ```ts
 const kvPromises = input.localKvs.map(async (localKv) => {
-    const records = await localKv.kv.list({prefix: []}, {limit:10})
+    const records = await localKv.kv.list({prefix: ['pd', 'output']})
     localKv.records = await Array.fromAsync(records);
     localKv.hasRecords = localKv.records.length;
     return localKv;

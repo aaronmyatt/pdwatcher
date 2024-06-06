@@ -79,3 +79,25 @@ Key press events can either be waited for async, streamed or listened to, very h
     event.altKey,
     event.repeat)
     ```
+
+## Show an image
+Once I changed the image to a working url it worked well in iTerm. Tmux didn't play nicely though. There's probably some config required for tmux..
+- flags: /image
+- ```ts
+    import { cursorTo, eraseDown, image, link } from "https://deno.land/x/cliffy@v1.0.0-rc.4/ansi/ansi_escapes.ts";
+
+    const response = await fetch("https://picsum.photos/200");
+    const imageBuffer: ArrayBuffer = await response.arrayBuffer();
+
+    console.log(
+    cursorTo(0, 0) +
+        eraseDown() +
+        image(imageBuffer, {
+        width: 29,
+        preserveAspectRatio: true,
+        }) +
+        "\n          " +
+        link("Deno Land", "https://deno.land") +
+        "\n",
+    );
+    ```

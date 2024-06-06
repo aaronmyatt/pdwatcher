@@ -2,8 +2,10 @@
 
 Printing lots of objects to the terminal is pretty ugly. So let's only print the keys, maybe the value data type and a summary of the value data.
 
+## limitOutputLength
 ```ts
-$p.set(input, '/outputLength', 50)
+const {columns} = Deno.consoleSize()
+input.outputLength = (stringLength, padding=3) => columns - stringLength - padding
 ```
 
 
@@ -38,10 +40,8 @@ So long as the strings are not too long, we're all good, otherwise we should tru
 - check: /groups/string
 - ```ts
     const stringSummaries = $p.get(input, '/groups/string').map(([key,val]) => {
-        const sample = val.slice(0, input.outputLength)
-        return [key, 
-        `${JSON.stringify(sample)}${val.length-input.outputLength > 0 ? ` +${val.length-input.outputLength} chars` : ''}`
-        ]
+        const sample = val.slice(0, input.outputLength(key.length, 8))
+        return [key, JSON.stringify(sample)]
     })
     $p.set(input, '/summary/string', stringSummaries)
     ```
@@ -66,11 +66,9 @@ I'm thinking we just preserve the first element and leave an indicator of how ma
 - ```ts
     const arraySummary = $p.get(input, '/groups/array').map(([key, val]) => {
         const first = JSON.stringify($p.get(val, '/0'));
-
-        const itemCount = val.length-1 ? `...${val.length-1} items` : ''
-        const itemSummary = first.slice(0,input.outputLength)
+        const itemSummary = first.slice(0,input.outputLength(key.length, 9))
         return [
-            key, `[${itemSummary}... (${first.length-input.outputLength > 0 ? `+${first.length-input.outputLength} chars` : ''})], ${itemCount}`
+            key, '['+itemSummary
         ]
     })
     $p.set(input, '/summary/array', arraySummary)
@@ -83,7 +81,7 @@ I'm thinking we just preserve the first element and leave an indicator of how ma
 - ```ts
     const objSummary = $p.get(input, '/groups/object').map(([key, val]) => {
         const asString = JSON.stringify(val) || '';
-        const itemSummary = `${asString.slice(0,input.outputLength)}  ${asString.length-input.outputLength > 0 ? `+${asString.length-input.outputLength} chars` : ''}`
+        const itemSummary = asString.slice(0,input.outputLength(key.length, 7))
         return [
             key, `${itemSummary}`
         ]
@@ -92,7 +90,7 @@ I'm thinking we just preserve the first element and leave an indicator of how ma
     ```
 
 ## presentSummary
-Drop all our groups into a single array, sort them alphabetically, then put them into a template string
+Drop all our groups into a single array, sort them alphabetically, and return this new object with all values summarised.
 - check: /summary
     ```ts
     input.allSummaries = Object.entries($p.get(input, '/summary'))
@@ -104,7 +102,8 @@ Drop all our groups into a single array, sort them alphabetically, then put them
         })
     ```
 
-## output
+## outputDetailed
+Return this new object with all values summarised.
 ```ts
-input.summary = Deno.inspect(Object.fromEntries(input.allSummaries || []), {colors:true})
+input.summary = Object.fromEntries(input.allSummaries || [])
 ```

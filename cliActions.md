@@ -62,7 +62,13 @@ Name | ID | Path
 - flags: /kv
     ```ts
     import kvActions from "kvActions"
-    Object.assign(await kvActions.process(input));
+    while(true){
+        await kvActions.process(input);
+        if(input.back) {
+            $p.set(input, '/back', false);
+            break;
+        }
+    }
     ```
 
 ```ts

@@ -1,7 +1,10 @@
+
+## Detailed Object Summary
 ```ts
 import objectSummary from "objectSummary"
 import raw from '/cliActions/index.json' with { type: "json" };
 input.obj = raw;
+input.detailed = true;
 const output = await objectSummary.process(input)
 
 if(output.errors){
