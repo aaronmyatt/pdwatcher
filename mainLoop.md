@@ -9,18 +9,21 @@ import { Input } from "https://deno.land/x/cliffy@v1.0.0-rc.4/prompt/input.ts";
     ```ts
     import fetchAndTrackLatest from "fetchAndTrackLatest"
 
+    input.showHistory = true;
     input.interval = setInterval(async () => {
         const output = await fetchAndTrackLatest.process(input)
         Object.assign(input, output);
+        input.showHistory = false;
     }, 1000);
 
     input.actionCode = await Input.prompt('r: reset, d: drilldown, q: quit');
+    clearInterval(input.interval);
     ```
 
 ## drilldown
 - check: /action/drilldown
     ```ts
-    import { Select, prompt } from "https://deno.land/x/cliffy@v1.0.0-rc.4/prompt/mod.ts";
+    import { Select, Input as PromptInput, prompt } from "https://deno.land/x/cliffy@v1.0.0-rc.4/prompt/mod.ts";
     import { colors } from "https://deno.land/x/cliffy@v1.0.0-rc.4/ansi/colors.ts";
 
 
@@ -67,7 +70,7 @@ import { Input } from "https://deno.land/x/cliffy@v1.0.0-rc.4/prompt/input.ts";
                 
                 const nextStep = await Input.prompt('r: rename KV, b: back, e: end');
                 if(nextStep === 'b'){
-                    next('pickRecord');
+                    await next('pickRecord');
                 }
 
                 if(nextStep === 'r'){
@@ -75,30 +78,34 @@ import { Input } from "https://deno.land/x/cliffy@v1.0.0-rc.4/prompt/input.ts";
                     const { kv } = input.localKvs.find(kv => kv.id === pickRecord.kvid)
                     await kv.set(['pd', 'meta', 'name'], name)
                     console.log('Name updated ✅')
-                    next('pickRecord');
+                    await next('pickRecord');
                 }
 
                 if(nextStep === 'e'){
-                    next();
+                    await next();
                 }
             }
+        },
+        {
+            type: PromptInput,
+            name: "nextAction",
+            message: 'r: reset, l: log latest, q: quit'
         }
     ]);
     //if(typeof output === 'string') console.log(Deno.inspect(JSON.parse(output.value), {colors: true, breakLength: Infinity, strAbbreviateSize: Infinity}));
     if(typeof output.value === 'string') console.log(JSON.parse(output.value));
     else console.log(output.value);
-
-    input.actionCode = await Input.prompt('r: reset, l: log latest, q: quit');
     ```
 
 ## chooseAction
+When there is no `input.action` lined up, catch the user here so they can choose what to do next.
 - not: /action
     ```ts
-    console.log(input.action);
     input.actionCode = await Input.prompt('r: reset, l: log latest, d: drilldown, q: quit');
     ```
 
 ## consumeActionCode
+Interpret the single character "actions" and line up the next function to step into.
 - check: /actionCode
     ```ts
     const actionPointer = ({
