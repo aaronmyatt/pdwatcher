@@ -16,39 +16,21 @@ import { Input } from "https://deno.land/x/cliffy@v1.0.0-rc.4/prompt/input.ts";
         input.showHistory = false;
     }, 1000);
 
-    input.actionCode = await Input.prompt('r: reset, d: drilldown, q: quit');
+    input.actionCode = await Input.prompt({message: 'r: reset, l: log latest, d: drilldown, q: quit', minLength: 1, maxLength: 1});
     clearInterval(input.interval);
     ```
 
 ## drilldown
 - check: /action/drilldown
     ```ts
-    import { Select, Input as PromptInput, prompt } from "https://deno.land/x/cliffy@v1.0.0-rc.4/prompt/mod.ts";
+    import { Select, prompt } from "https://deno.land/x/cliffy@v1.0.0-rc.4/prompt/mod.ts";
     import { colors } from "https://deno.land/x/cliffy@v1.0.0-rc.4/ansi/colors.ts";
-
-
-    const formatRecord = (name, record) => {
-        const logBase = `${name || 'NoName'} ${record.key.at(-2)} ${colors.bold.green(record.key.at(-1))}`;
-        try {
-            let value = record.value;
-            typeof value === 'string' && (value = JSON.parse(value));
-            const keys = Object.keys(value).map(k => {
-                if(k === 'error') return colors.red(k);
-                if(k === 'errors') return colors.red(k);
-                return k;
-            })
-            return `${logBase} ${keys}`;
-        } catch(e) {
-            input.debug && console.error(e.message);
-            return `${logBase} ${colors.yellow(record.value)}`;
-        }
-    }
 
     const options = Object.entries(input.history).map(([key, values]) => {
             const { name } = input.localKvs.find(kv => kv.id === key)
             return values.map(record => {
                 return {
-                    name: formatRecord(name || key, record),
+                    name: input.formatRecord(name || key, record),
                     value: {
                         kvid: key,
                         ...record
@@ -85,23 +67,19 @@ import { Input } from "https://deno.land/x/cliffy@v1.0.0-rc.4/prompt/input.ts";
                     await next();
                 }
             }
-        },
-        {
-            type: PromptInput,
-            name: "nextAction",
-            message: 'r: reset, l: log latest, q: quit'
         }
     ]);
-    //if(typeof output === 'string') console.log(Deno.inspect(JSON.parse(output.value), {colors: true, breakLength: Infinity, strAbbreviateSize: Infinity}));
     if(typeof output.value === 'string') console.log(JSON.parse(output.value));
     else console.log(output.value);
+
+    input.actionCode = await Input.prompt({message: 'r: reset, l: log latest, d: drilldown, q: quit', minLength: 1, maxLength: 1});
     ```
 
 ## chooseAction
 When there is no `input.action` lined up, catch the user here so they can choose what to do next.
 - not: /action
     ```ts
-    input.actionCode = await Input.prompt('r: reset, l: log latest, d: drilldown, q: quit');
+    input.actionCode = await Input.prompt({message: 'r: reset, l: log latest, d: drilldown, q: quit', minLength: 1, maxLength: 1});
     ```
 
 ## consumeActionCode
@@ -115,9 +93,10 @@ Interpret the single character "actions" and line up the next function to step i
         q: '/action/quit'
     })[input.actionCode]
 
+
     $p.set(input, '/action', {});
-    $p.set(input,  actionPointer, true);
     $p.set(input, '/actionCode', false);
+    $p.set(input, actionPointer, true);
     ```
 
 ## reset
